@@ -58,7 +58,7 @@ app.post("/participants", async (req, res) => {
 
 app.get("/participants", async (req,res) => {
     try {
-        const participantes = await db.collection("participants").find().toArray();
+        const participantes = await db.collection("participantes").find().toArray();
         res.send(participantes);
     } catch (e) {
         console.log(e);
@@ -100,7 +100,7 @@ app.post("/messages", async(req, res) => {
         console.log(e);
         return res.send("Erro ao consultar a lista de participantes");
     }
-    
+
 });
 
 
