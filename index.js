@@ -103,6 +103,31 @@ app.post("/messages", async(req, res) => {
 
 });
 
+app.get("/messages", async (req, res) => {
+    const limite = parseInt(req.query.limit);
+    const usuario = req.headers.user;
+    
+    try {
+        const mensagens = await db.collection("mensagens").find().toArray();
+        const mensagens_filtradas = mensagens.filter( mensagem => {
+          const para_ou_dele =  mensagem.to === usuario || mensagem.from === usuario || mensagem.to === "todos";
+          const publica = mensagem.type === "message";
+          
+          return para_ou_dele || publica;
+        });
+
+        if(limite > 0){
+           return res.send(mensagens_filtradas.slice(-limite));
+        }
+
+        res.send(mensagens_filtradas);
+
+    } catch (e) {
+        console.log(e);
+        res.send("Erro ao consultar as mensagens");
+    }
+
+});
 
 const porta = 5000;
 app.listen(porta, ()=> {
