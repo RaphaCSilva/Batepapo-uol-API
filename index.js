@@ -43,7 +43,7 @@ app.post("/participants", async (req, res) => {
             to: 'Todos',
             text: 'entra na sala ...',
             type: 'status',
-            time: dayjs().format('HH:MM:SS')
+            time: dayjs().format('HH:mm:ss')
         })
 
         res.sendStatus(201);
@@ -56,7 +56,51 @@ app.post("/participants", async (req, res) => {
 
 });
 
+app.get("/participants", async (req,res) => {
+    try {
+        const participantes = await db.collection("participants").find().toArray();
+        res.send(participantes);
+    } catch (e) {
+        console.log(e);
+        return res.send("Erro ao obter participantes");
+    }
+});
 
+app.post("/messages", async(req, res) => {
+    const mensagem = req.body;
+    const usuario = req.headers.user;
+    const mensagemSchema = joi.object({
+        to: joi.string().required(),
+        text: joi.string().required(),
+        type: joi.string().valid('private_message', 'message').required()
+    });
+    const {error} = mensagemSchema.validate(mensagem, {abortEarly: false});
+    if(error){
+        console.log(error);
+        return res.sendStatus(422);
+    }
+
+    try {
+        const participante = await db.collection("participantes").findOne({name: usuario});
+        if(!participante){
+            return res.sendStatus(422);
+        }
+
+        await db.collection("mensagens").insertOne({
+            from: usuario,
+            to: mensagem.to,
+            text: mensagem.text,
+            type: mensagem.type,
+            time: dayjs().format('HH:mm:ss')
+        });
+
+        res.sendStatus(201);
+
+    } catch (e) {
+        console.log(e);
+        return res.send("Erro ao consultar a lista de participantes");
+    }
+});
 
 
 const porta = 5000;
