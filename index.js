@@ -153,20 +153,30 @@ setInterval( async () => {
     const hora_inatividade = Date.now() - tempo_inativo;
     try {
         const participantes = await db.collection("participantes").find().toArray();
-        const participantes_inativos = mensagens.filter( participante => {
+        const participantes_inativos = participantes.filter( participante => {
             if(participante.lastStatus <= hora_inatividade){
                 return true;
             }
         });
         if(participantes_inativos.length > 0){
           for(let i = 0; i<participantes_inativos.length; i++){
+            console.log("apagando");
+            const mensagem_adeus = {
+                from: participantes_inativos[i].name,
+                to: 'Todos',
+                text: 'sai da sala ...',
+                type: 'status',
+                time: dayjs().format("HH:mm:ss")
+            }
+            await db.collection("mensagens").insertOne(mensagem_adeus);
             
+            await db.collection("participantes").deleteOne({name: participantes_inativos[i].name});
+
           }
         }
 
     } catch (e) {
-        console.log(e);
-        res.send("Erro ao tentar remover inativos")
+        console.log("Erro ao tentar remover inativos", e);
     }
 }, tempo_checar);
 
