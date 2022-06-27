@@ -13,7 +13,7 @@ app.use(cors());
 app.use(json());
 
 let db;
-const mongoClient = new MongoClient("mongodb://localhost:27017");
+const mongoClient = new MongoClient(process.env.MONGO_URL);
 const promise = mongoClient.connect();
 promise.then(() => {
   db = mongoClient.db("bate-papo-uol");
@@ -110,8 +110,8 @@ app.get("/messages", async (req, res) => {
     try {
         const mensagens = await db.collection("mensagens").find().toArray();
         const mensagens_filtradas = mensagens.filter( mensagem => {
-          const para_ou_dele =  mensagem.to === usuario || mensagem.from === usuario || mensagem.to === "todos";
-          const publica = mensagem.type === "message"; 
+          const para_ou_dele =  mensagem.to === usuario || mensagem.from === usuario || mensagem.to === "Todos";
+          const publica = mensagem.type === "message" || mensagem.type === "status"; 
           
           return para_ou_dele || publica;
         });
@@ -159,20 +159,20 @@ setInterval( async () => {
             }
         });
         if(participantes_inativos.length > 0){
+          const mensagens_adeus = [];
           for(let i = 0; i<participantes_inativos.length; i++){
-            console.log("apagando");
-            const mensagem_adeus = {
+            mensagens_adeus.push({
                 from: participantes_inativos[i].name,
                 to: 'Todos',
                 text: 'sai da sala ...',
                 type: 'status',
                 time: dayjs().format("HH:mm:ss")
-            }
-            await db.collection("mensagens").insertOne(mensagem_adeus);
+            });
             
             await db.collection("participantes").deleteOne({name: participantes_inativos[i].name});
 
           }
+          await db.collection("mensagens").insertMany(mensagens_adeus);
         }
 
     } catch (e) {
@@ -181,7 +181,7 @@ setInterval( async () => {
 }, tempo_checar);
 
 
-const porta = 5000;
+const porta = process.env.PORTA;
 app.listen(porta, ()=> {
     console.log(chalk.bold.blue('servidor de pé na porta ' + porta));
 });
