@@ -100,6 +100,7 @@ app.post("/messages", async(req, res) => {
         console.log(e);
         return res.send("Erro ao consultar a lista de participantes");
     }
+    
 });
 
 
