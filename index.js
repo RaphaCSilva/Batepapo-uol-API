@@ -111,7 +111,7 @@ app.get("/messages", async (req, res) => {
         const mensagens = await db.collection("mensagens").find().toArray();
         const mensagens_filtradas = mensagens.filter( mensagem => {
           const para_ou_dele =  mensagem.to === usuario || mensagem.from === usuario || mensagem.to === "todos";
-          const publica = mensagem.type === "message";
+          const publica = mensagem.type === "message"; 
           
           return para_ou_dele || publica;
         });
@@ -129,7 +129,49 @@ app.get("/messages", async (req, res) => {
 
 });
 
+app.post("/status", async(req, res) => {
+    const usuario = req.headers.user;
+    try {
+        const participante = await db.collection("participantes").findOne({name: usuario});
+        if(!participante){
+            return res.sendStatus(404);
+        }
+        await db.collection("participantes").updateOne({name: usuario}, {$set: {lastStatus: Date.now()}});
+        res.sendStatus(200);
+
+    } catch (e) {
+        console.log(e);
+        res.send("Erro ao tentar atualizar status");
+    }
+
+});
+
+const tempo_checar = 15000;
+const tempo_inativo = 10000
+
+setInterval( async () => {
+    const hora_inatividade = Date.now() - tempo_inativo;
+    try {
+        const participantes = await db.collection("participantes").find().toArray();
+        const participantes_inativos = mensagens.filter( participante => {
+            if(participante.lastStatus <= hora_inatividade){
+                return true;
+            }
+        });
+        if(participantes_inativos.length > 0){
+          for(let i = 0; i<participantes_inativos.length; i++){
+            
+          }
+        }
+
+    } catch (e) {
+        console.log(e);
+        res.send("Erro ao tentar remover inativos")
+    }
+}, tempo_checar);
+
+
 const porta = 5000;
 app.listen(porta, ()=> {
     console.log(chalk.bold.blue('servidor de pé na porta ' + porta));
-})
+});
